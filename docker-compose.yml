@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-shortener}
+      POSTGRES_USER: ${DB_USER:-shortener}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-shortener}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-shortener} -d ${DB_NAME:-shortener}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-shortener}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-shortener}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-shortener}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
