@@ -13,6 +13,10 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=100000,expireAfterAccess=1h,recordStats
 
 server:
   port: 8080
@@ -21,6 +25,21 @@ server:
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:8080}
+  code:
+    # The affine permutation's multiplier/offset MUST NOT change once data
+    # exists (see CLAUDE.md) — overridable only for local experimentation.
+    multiplier: ${APP_CODE_MULTIPLIER:9132277}
+    offset: ${APP_CODE_OFFSET:4861105}
+    reserved:
+      - docs
+      - help
+      - info
+      - home
+      - "null"
+      - test
+      - root
+      - user
+      - html
 
 management:
   endpoints:

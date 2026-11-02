@@ -6,8 +6,6 @@ import org.springframework.validation.annotation.Validated;
 
 /**
  * Application settings under the {@code app.} prefix.
- *
- * @param baseUrl origin short URLs are built from; never taken from the request Host header
  */
 @Validated
 @ConfigurationProperties(prefix = "app")
