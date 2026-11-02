@@ -20,6 +20,10 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long> {
     @Query(value = "SELECT nextval('short_url_id_seq')", nativeQuery = true)
     long nextId();
 
+    /** For {@link com.example.shortener.metrics.KeyspaceUsageGauge}; does not consume a value. */
+    @Query(value = "SELECT last_value FROM short_url_id_seq", nativeQuery = true)
+    long lastSequenceValue();
+
     @Modifying
     @Query(value = """
             INSERT INTO short_url (id, code, target_url, url_hash, created_at)

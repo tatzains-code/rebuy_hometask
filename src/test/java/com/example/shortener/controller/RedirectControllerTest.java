@@ -1,5 +1,6 @@
 package com.example.shortener.controller;
 
+import com.example.shortener.metrics.ShortenerMetrics;
 import com.example.shortener.service.TargetUrlLookup;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,8 @@ class RedirectControllerTest {
 
     @MockitoBean
     private TargetUrlLookup targetUrlLookup;
+    @MockitoBean
+    private ShortenerMetrics metrics;
 
     @Test
     void redirectsToTargetUrlWhenCodeIsFound() throws Exception {

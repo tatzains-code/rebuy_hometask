@@ -6,6 +6,7 @@ import com.example.shortener.controller.ShortUrlController;
 import com.example.shortener.exception.InvalidUrlException;
 import com.example.shortener.exception.KeyspaceExhaustedException;
 import com.example.shortener.exception.ShortUrlNotFoundException;
+import com.example.shortener.metrics.ShortenerMetrics;
 import com.example.shortener.service.ShortUrlService;
 import com.example.shortener.service.TargetUrlLookup;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,8 @@ class GlobalExceptionHandlerTest {
     private AppProperties appProperties;
     @MockitoBean
     private TargetUrlLookup targetUrlLookup;
+    @MockitoBean
+    private ShortenerMetrics metrics;
 
     @Test
     void methodArgumentNotValidReturnsValidationFailed() throws Exception {

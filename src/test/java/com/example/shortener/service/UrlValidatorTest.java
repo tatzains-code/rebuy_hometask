@@ -16,8 +16,8 @@ class UrlValidatorTest {
 
     @ParameterizedTest
     @CsvSource({
-            "https://www.rebuy.de/kaufen, https://www.rebuy.de/kaufen",
-            "HTTPS://WWW.REBUY.DE:443/kaufen, https://www.rebuy.de/kaufen",
+            "https://www.google.com/search, https://www.google.com/search",
+            "HTTPS://WWW.GOOGLE.COM:443/search, https://www.google.com/search",
             "http://Example.COM:80/path, http://example.com/path",
             "https://example.com:8443/path, https://example.com:8443/path",
             "https://example.com/path?q=1#frag, https://example.com/path?q=1#frag"

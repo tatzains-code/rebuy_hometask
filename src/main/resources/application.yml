@@ -15,6 +15,9 @@ spring:
     locations: classpath:db/migration
   cache:
     type: caffeine
+    # Pre-creates the cache at startup so cache metrics bind to it immediately,
+    # instead of only on its first (lazy) use.
+    cache-names: targetUrls
     caffeine:
       spec: maximumSize=100000,expireAfterAccess=1h,recordStats
 
@@ -42,14 +45,26 @@ app:
       - html
 
 management:
+  server:
+    port: 8081
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus,metrics
   endpoint:
     health:
       probes:
         enabled: true
+  metrics:
+    tags:
+      application: url-shortener
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+springdoc:
+  swagger-ui:
+    enabled: true
 
 logging:
   level:

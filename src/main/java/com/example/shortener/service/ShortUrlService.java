@@ -6,8 +6,7 @@ import com.example.shortener.exception.KeyspaceExhaustedException;
 import com.example.shortener.exception.ShortUrlNotFoundException;
 import com.example.shortener.repository.ShortUrlRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
@@ -20,6 +19,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ShortUrlService {
@@ -30,7 +30,6 @@ public class ShortUrlService {
     private final ShortCodeGenerator codeGenerator;
     private final CodeProperties codeProperties;
     private final UrlValidator urlValidator;
-    private final CacheManager cacheManager;
 
     @Transactional
     public CreateResult create(String rawUrl) {
@@ -39,6 +38,7 @@ public class ShortUrlService {
 
         Optional<ShortUrl> existing = repository.findByUrlHash(urlHash);
         if (existing.isPresent()) {
+            log.debug("Duplicate submission; returning existing code {}", existing.get().getCode());
             return new CreateResult(existing.get(), false);
         }
 
@@ -51,20 +51,13 @@ public class ShortUrlService {
 
         int inserted = repository.insertIfAbsent(id, code, normalizedUrl, urlHash, Instant.now());
         if (inserted == 0) {
+            log.debug("Lost the insert race for this URL; re-reading the row another request created");
             return new CreateResult(repository.findByUrlHash(urlHash).orElseThrow(), false);
         }
 
         ShortUrl saved = repository.findByCode(code).orElseThrow();
-        cacheTargetUrl(saved);
+        log.info("Created short URL {} -> {}", saved.getCode(), saved.getTargetUrl());
         return new CreateResult(saved, true);
-    }
-
-    /** Write-through: avoids a cold cache on the first redirect right after creation. */
-    private void cacheTargetUrl(ShortUrl shortUrl) {
-        Cache cache = cacheManager.getCache(TargetUrlLookup.CACHE_NAME);
-        if (cache != null) {
-            cache.put(shortUrl.getCode(), shortUrl.getTargetUrl());
-        }
     }
 
     @Transactional(readOnly = true)

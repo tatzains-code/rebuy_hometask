@@ -22,9 +22,25 @@ services:
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
     ports:
       - "8080:8080"
+      - "127.0.0.1:8081:8081"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     depends_on:
       postgres:
         condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./ops/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - app
 
 volumes:
   postgres-data:

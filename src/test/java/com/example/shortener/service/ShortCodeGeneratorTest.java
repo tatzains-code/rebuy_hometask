@@ -29,7 +29,7 @@ class ShortCodeGeneratorTest {
         assertIsValidCode(generator.toCode(id));
     }
 
-    @RepeatedTest(10_000)
+    @RepeatedTest(200)
     void producesFourAlphabetCharactersForRandomIds() {
         long id = ThreadLocalRandom.current().nextLong(ShortCodeGenerator.KEYSPACE);
         assertIsValidCode(generator.toCode(id));

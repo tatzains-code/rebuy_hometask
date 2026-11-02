@@ -3,6 +3,7 @@ package com.example.shortener.controller;
 import com.example.shortener.config.AppProperties;
 import com.example.shortener.entity.ShortUrl;
 import com.example.shortener.exception.ShortUrlNotFoundException;
+import com.example.shortener.metrics.ShortenerMetrics;
 import com.example.shortener.service.ShortUrlService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,8 @@ class ShortUrlControllerTest {
 
     @MockitoBean
     private AppProperties appProperties;
+    @MockitoBean
+    private ShortenerMetrics metrics;
 
     @Test
     void returnsShortUrlResponseWhenCodeIsFound() throws Exception {

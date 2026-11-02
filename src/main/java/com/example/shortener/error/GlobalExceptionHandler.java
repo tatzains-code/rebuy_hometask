@@ -3,6 +3,8 @@ package com.example.shortener.error;
 import com.example.shortener.exception.InvalidUrlException;
 import com.example.shortener.exception.KeyspaceExhaustedException;
 import com.example.shortener.exception.ShortUrlNotFoundException;
+import com.example.shortener.metrics.ShortenerMetrics;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.DataAccessException;
@@ -40,8 +42,10 @@ import java.util.Map;
  */
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    private final ShortenerMetrics metrics;
     private final String notFoundHtml = readNotFoundHtml();
 
     @Override
@@ -100,6 +104,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ResponseEntity<Object> handleShortUrlNotFound(ShortUrlNotFoundException ex, WebRequest request) {
         log.debug("Short URL not found: {}", ex.getMessage());
         if (prefersHtml(request)) {
+            metrics.recordError(ErrorCode.SHORT_URL_NOT_FOUND);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).contentType(MediaType.TEXT_HTML).body(notFoundHtml);
         }
         return problemResponse(HttpStatus.NOT_FOUND, ErrorCode.SHORT_URL_NOT_FOUND, ex.getMessage(), request);
@@ -129,6 +134,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     private ProblemDetail problemDetail(HttpStatus status, ErrorCode code, String detail, WebRequest request) {
+        metrics.recordError(code);
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
         problem.setType(URI.create("urn:problem:" + code.toKebabCase()));
         problem.setTitle(status.getReasonPhrase());
