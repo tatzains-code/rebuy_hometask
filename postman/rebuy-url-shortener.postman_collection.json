@@ -1,0 +1,143 @@
+{
+  "info": {
+    "name": "rebuy URL Shortener",
+    "description": "A few core-flow requests against the local instance: create, dedup, redirect, not-found, validation error, health. Run with the 'url-shortener-local' environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create short URL (new)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 201', () => pm.response.to.have.status(201));",
+              "const json = pm.response.json();",
+              "pm.test('code has 4 characters', () => pm.expect(json.code).to.have.lengthOf(4));",
+              "pm.environment.set('code', json.code);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"https://www.rebuy.de/kaufen\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/v1/short-urls", "host": ["{{baseUrl}}"], "path": ["api", "v1", "short-urls"] }
+      }
+    },
+    {
+      "name": "Create short URL (duplicate -> dedup)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200 (already exists)', () => pm.response.to.have.status(200));",
+              "pm.test('same code as the first create', () => pm.expect(pm.response.json().code).to.eql(pm.environment.get('code')));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"https://www.rebuy.de/kaufen\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/v1/short-urls", "host": ["{{baseUrl}}"], "path": ["api", "v1", "short-urls"] }
+      }
+    },
+    {
+      "name": "Redirect to target (found)",
+      "description": "Disable 'Automatically follow redirects' in this request's Settings tab to see the 302 instead of the final page.",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 302 (requires redirects disabled in request settings)', () => pm.response.to.have.status(302));",
+              "pm.test('has a Location header', () => pm.expect(pm.response.headers.has('Location')).to.be.true);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/{{code}}", "host": ["{{baseUrl}}"], "path": ["{{code}}"] }
+      }
+    },
+    {
+      "name": "Redirect unknown code (not found)",
+      "description": "Uses a syntactically valid but (presumably) never-generated code. If this happens to collide with a real code, swap it for another 4-character value.",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 404', () => pm.response.to.have.status(404));",
+              "pm.test('errorCode is SHORT_URL_NOT_FOUND', () => pm.expect(pm.response.json().errorCode).to.eql('SHORT_URL_NOT_FOUND'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/zzz9", "host": ["{{baseUrl}}"], "path": ["zzz9"] }
+      }
+    },
+    {
+      "name": "Create short URL - validation error",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 400', () => pm.response.to.have.status(400));",
+              "pm.test('body has an errorCode', () => pm.expect(pm.response.json().errorCode).to.exist);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"not a url\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/v1/short-urls", "host": ["{{baseUrl}}"], "path": ["api", "v1", "short-urls"] }
+      }
+    },
+    {
+      "name": "Health check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('status is UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{managementBaseUrl}}/actuator/health", "host": ["{{managementBaseUrl}}"], "path": ["actuator", "health"] }
+      }
+    }
+  ]
+}
